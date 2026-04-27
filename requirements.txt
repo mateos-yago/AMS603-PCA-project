@@ -1,0 +1,17 @@
+numpy
+pandas
+scipy
+scikit-learn
+torch
+yfinance
+requests
+beautifulsoup4
+matplotlib
+seaborn
+plotly
+jupyter
+ipykernel
+pyyaml
+tqdm
+statsmodels
+joblib

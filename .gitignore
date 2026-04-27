@@ -47,6 +47,14 @@ ENV/
 .DS_Store
 Thumbs.db
 
+# Data directories — keep structure but not contents
+data/raw/*
+data/processed/*
+data/results/*
+!data/raw/.gitkeep
+!data/processed/.gitkeep
+!data/results/.gitkeep
+
 # Output / figures (uncomment if you want to exclude)
 # figures/
 # output/

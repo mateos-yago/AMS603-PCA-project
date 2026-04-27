@@ -1,0 +1,102 @@
+# ============================================================
+# GLOBAL
+# ============================================================
+random_seed: 42
+log_level: "INFO"
+
+# ============================================================
+# DATA
+# ============================================================
+data:
+  start_date: "2014-01-01"
+  end_date: "2024-01-01"
+  universe: "sp500"
+  price_field: "Adj Close"
+  min_history_days: 504             # ~2 years; drop tickers with fewer trading days
+  cache_dir: "data/raw"
+  processed_dir: "data/processed"
+  results_dir: "data/results"
+
+# ============================================================
+# TRAIN / VAL / TEST SPLIT  (must sum to 1.0)
+# ============================================================
+split:
+  train: 0.70
+  val:   0.10
+  test:  0.20
+
+# ============================================================
+# PCA MODEL
+# ============================================================
+pca:
+  n_factors_grid: [5, 10, 15, 20, 30]
+  default_n_factors: 15
+  correlation_window: 252           # days used to compute correlation matrix (Avellaneda & Lee)
+  variance_threshold: 0.55          # select k factors to explain this fraction of variance
+
+# ============================================================
+# AUTOENCODER MODEL
+# ============================================================
+autoencoder:
+  bottleneck_grid: [5, 10, 15, 20, 30]
+  default_bottleneck: 15
+
+  depth_grid: [1, 2, 3]
+  default_depth: 2
+
+  activation_grid: ["tanh", "elu", "relu"]
+  default_activation: "tanh"
+
+  learning_rate: 0.001
+  weight_decay: 0.0001
+  batch_size: 64
+  max_epochs: 200
+  early_stopping_patience: 15
+  dropout_rate: 0.1
+
+  # hidden layer sizes = bottleneck * hidden_scale^layer_index
+  # e.g. bottleneck=15, depth=2 → [N, 240, 60, 15, 60, 240, N]
+  hidden_scale: 4
+
+# ============================================================
+# OU PROCESS & SIGNAL GENERATION
+# ============================================================
+signals:
+  ou_lookback_days: 60              # rolling window for OU parameter estimation
+  min_kappa: 8.4                    # minimum mean-reversion speed (= 252/30); reject slower stocks
+
+  zscore_entry_grid: [1.0, 1.25, 1.5, 2.0]
+  zscore_exit_grid:  [0.0, 0.5, 0.75]
+  default_zscore_entry: 1.25
+  default_zscore_exit:  0.0
+
+# ============================================================
+# PORTFOLIO CONSTRUCTION
+# ============================================================
+portfolio:
+  leverage: 2.0                     # dollar amount long (and short) per unit of equity
+  max_position_weight: 0.05         # max fraction of equity in any single stock
+
+# ============================================================
+# TRANSACTION COSTS
+# ============================================================
+transaction_costs:
+  cost_bps: 5                       # one-way slippage (5 bps = 0.05%)
+  bid_ask_spread_bps: 2             # half-spread in basis points
+
+# ============================================================
+# BACKTESTING
+# ============================================================
+backtesting:
+  initial_capital: 1_000_000
+  rebalance_frequency: "daily"
+  apply_transaction_costs: true
+  risk_free_rate_annual: 0.04
+
+# ============================================================
+# EXPERIMENTS / GRID SEARCH
+# ============================================================
+experiments:
+  n_jobs: -1
+  save_all_results: true
+  results_filename: "grid_search_results.csv"
