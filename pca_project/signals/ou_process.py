@@ -139,24 +139,21 @@ class ZScoreGenerator:
 
             s_raw = np.full(N, np.nan)
             for i in range(N):
-                params = self.ou.estimate_parameters(window[:, i])
+                window_i = window[:, i]
+                x_end = np.sum(window_i)  # X_T = cumulative residual at end of window
+                params = self.ou.estimate_parameters(window_i)
                 if params["is_valid"]:
                     m_i = params["m"]
                     sig_eq_i = params["sigma_eq"]
                     if sig_eq_i > 0:
-                        s_raw[i] = -m_i / sig_eq_i
+                        s_raw[i] = (x_end - m_i) / sig_eq_i  # A&L: s = (X_T - m) / sigma_eq
                     kappas_np[t, i] = params["kappa"]
 
-            # Cross-sectional centering (use only valid entries)
+            # Cross-sectional demeaning — removes market-wide OU drift not captured by factors
             valid_mask = ~np.isnan(s_raw)
             if valid_mask.sum() > 0:
-                cross_mean = np.nanmean(s_raw)
-                zscores_np[t, valid_mask] = s_raw[valid_mask] - cross_mean + np.nanmean(s_raw[valid_mask])
-                # Simpler correct form: centred = s_raw - mean(s_raw[valid])
-                zscores_np[t, :] = np.where(valid_mask, s_raw - cross_mean + cross_mean, np.nan)
-                # Correct formula from paper: s_centred_i = -m_i/sigma_eq_i - mean_j(-m_j/sigma_eq_j)
-                # i.e. demean the s-scores
-                zscores_np[t, valid_mask] = s_raw[valid_mask] - np.nanmean(s_raw)
+                cs_mean = np.nanmean(s_raw)
+                zscores_np[t, valid_mask] = s_raw[valid_mask] - cs_mean
 
         return (
             pd.DataFrame(zscores_np, index=residuals.index, columns=residuals.columns),
